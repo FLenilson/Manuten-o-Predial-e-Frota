@@ -34,8 +34,8 @@ button:disabled{opacity:0.6;cursor:not-allowed}
 .main{margin-left:230px;flex:1;display:flex;flex-direction:column}
 
 .sb-head{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
-.sb-logo-img{background:#fff;border-radius:9px;padding:8px 10px;display:inline-block;margin-bottom:10px}
-.sb-logo-img img{height:30px;width:auto;display:block}
+.sb-logo-img{background:#fff;border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.sb-logo-img img{height:44px;width:auto;max-width:100%;display:block}
 .sb-brand{font-size:14px;font-weight:700;color:#fff;line-height:1.3}
 .sb-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
 
@@ -482,6 +482,7 @@ table.imp-table td{padding:6px 8px;border:1px solid var(--border);white-space:no
     <input type="hidden" id="mx-id" value="">
     <div class="form-g">
       <div class="fld form-full"><label>Mês de referência *</label><input type="month" id="mx-mes"></div>
+      <div class="fld form-full"><label>Unidade consumidora / ponto de consumo (opcional)</label><input type="text" id="mx-uc" list="mx-uc-list" maxlength="80" placeholder="Ex: UC 12345 — Bloco A  /  Hidrômetro 2"><datalist id="mx-uc-list"></datalist><div style="font-size:10.5px;color:var(--txt3);margin-top:3px">Use quando a unidade tem mais de uma conta de energia ou água: cadastre um registro por conta em cada mês.</div></div>
 
       <div class="fld form-full" style="margin-top:2px"><label style="color:var(--g2);text-transform:uppercase;font-size:10px;letter-spacing:.05em">⚡ Energia elétrica</label></div>
       <div class="fld"><label>Consumo (kWh)</label><input type="number" id="mx-energiakwh" min="0" step="0.01" placeholder="Ex: 3200"></div>
@@ -491,11 +492,13 @@ table.imp-table td{padding:6px 8px;border:1px solid var(--border);white-space:no
       <div class="fld"><label>Consumo (m³)</label><input type="number" id="mx-aguam3" min="0" step="0.01" placeholder="Ex: 120"></div>
       <div class="fld"><label>Valor pago (R$)</label><input type="number" id="mx-aguavalor" min="0" step="0.01" placeholder="0,00"></div>
 
-      <div class="fld form-full" style="margin-top:2px"><label style="color:var(--g2);text-transform:uppercase;font-size:10px;letter-spacing:.05em">☀️ Geração e injeção de energia (usina solar)</label></div>
+      <div id="mx-solar" style="display:contents">
+      <div class="fld form-full" style="margin-top:2px"><label style="color:var(--g2);text-transform:uppercase;font-size:10px;letter-spacing:.05em">☀️ Geração e injeção de energia (usina solar — somente Matriz)</label></div>
       <div class="fld"><label>Geração (kWh)</label><input type="number" id="mx-geracaokwh" min="0" step="0.01" placeholder="Ex: 2100"></div>
       <div class="fld"><label>Valor economizado (R$)</label><input type="number" id="mx-geracaovalor" min="0" step="0.01" placeholder="0,00"></div>
       <div class="fld"><label>Injeção na rede (kWh)</label><input type="number" id="mx-injecaokwh" min="0" step="0.01" placeholder="Ex: 400"></div>
       <div class="fld"><label>Valor em créditos (R$)</label><input type="number" id="mx-injecaovalor" min="0" step="0.01" placeholder="0,00"></div>
+      </div>
 
       <div class="fld form-full" style="margin-top:2px"><label style="color:var(--g2);text-transform:uppercase;font-size:10px;letter-spacing:.05em">🖨️ Papel e impressões</label></div>
       <div class="fld"><label>Consumo de papel (resmas)</label><input type="number" id="mx-papelqtd" min="0" step="0.01" placeholder="Ex: 15"></div>
@@ -584,7 +587,7 @@ var CATEGORIAS = {
 };
 var PERIODO_DIAS = {'Quinzenal':15};
 var PERIODO_MESES = {'Mensal':1,'Bimestral':2,'Trimestral':3,'Quadrimestral':4,'Semestral':6,'Anual':12};
-var PERIODO_JANELA = {'Quinzenal':3,'Mensal':5,'Bimestral':7,'Trimestral':10,'Quadrimestral':12,'Semestral':15,'Anual':20};
+var PERIODO_JANELA = {'Quinzenal':3,'Mensal':5,'Bimestral':7,'Trimestral':10,'Quadrimestral':12,'Semestral':15,'Anual':30};
 var KM_PADRAO = {'Troca de óleo':10000,'Revisão geral':10000,'Pneus e alinhamento':10000,'Freios':20000,'Bateria':0,'Ar-condicionado veicular':20000,'Fluidos':10000,'Filtros':10000,'Outros':10000};
 
 var CHECKLIST_TEMPLATES = {
@@ -2145,10 +2148,13 @@ function abrirModalIndicador(id){
   document.getElementById('modal-indicador-titulo').textContent = d ? '✏️ Editar Registro Mensal' : '💡 Novo Registro Mensal';
   document.getElementById('mx-id').value = d ? d.id : '';
   document.getElementById('mx-mes').value = d ? d.mes : '';
+  document.getElementById('mx-uc').value = d ? (d.uc||'') : '';
+  document.getElementById('mx-uc-list').innerHTML = listaUCs(todosIndicadoresUnidade()).map(function(u){ return '<option value="'+esc(u)+'">'; }).join('');
   document.getElementById('mx-energiakwh').value = d ? (d.energiaKwh||'') : '';
   document.getElementById('mx-energiavalor').value = d ? (d.energiaValor||'') : '';
   document.getElementById('mx-aguam3').value = d ? (d.aguaM3||'') : '';
   document.getElementById('mx-aguavalor').value = d ? (d.aguaValor||'') : '';
+  document.getElementById('mx-solar').style.display = state.unit==='Matriz' ? 'contents' : 'none';
   document.getElementById('mx-geracaokwh').value = d ? (d.geracaoKwh||'') : '';
   document.getElementById('mx-geracaovalor').value = d ? (d.geracaoValor||'') : '';
   document.getElementById('mx-injecaokwh').value = d ? (d.injecaoKwh||'') : '';
@@ -2165,19 +2171,21 @@ function salvarIndicador(){
   var mes = document.getElementById('mx-mes').value;
   if(!mes){ mostrarNotify('err','Selecione o mês de referência.'); return; }
 
-  var jaExiste = todosIndicadoresUnidade().some(function(x){ return x.mes === mes && x.id !== id; });
-  if(jaExiste){ mostrarNotify('err','Já existe um registro para este mês nesta unidade. Edite o registro existente.'); return; }
+  var uc = document.getElementById('mx-uc').value.trim();
+  var jaExiste = todosIndicadoresUnidade().some(function(x){ return x.mes === mes && x.id !== id && ucDe(x).toLowerCase() === uc.toLowerCase(); });
+  if(jaExiste){ mostrarNotify('err', uc ? 'Já existe registro desta unidade consumidora neste mês. Edite o existente.' : 'Já existe um registro sem unidade consumidora neste mês. Edite o existente ou informe a unidade consumidora.'); return; }
 
   var dados = {
     mes: mes,
+    uc: uc,
     energiaKwh: n(document.getElementById('mx-energiakwh').value),
     energiaValor: n(document.getElementById('mx-energiavalor').value),
     aguaM3: n(document.getElementById('mx-aguam3').value),
     aguaValor: n(document.getElementById('mx-aguavalor').value),
-    geracaoKwh: n(document.getElementById('mx-geracaokwh').value),
-    geracaoValor: n(document.getElementById('mx-geracaovalor').value),
-    injecaoKwh: n(document.getElementById('mx-injecaokwh').value),
-    injecaoValor: n(document.getElementById('mx-injecaovalor').value),
+    geracaoKwh: state.unit==='Matriz' ? n(document.getElementById('mx-geracaokwh').value) : 0,
+    geracaoValor: state.unit==='Matriz' ? n(document.getElementById('mx-geracaovalor').value) : 0,
+    injecaoKwh: state.unit==='Matriz' ? n(document.getElementById('mx-injecaokwh').value) : 0,
+    injecaoValor: state.unit==='Matriz' ? n(document.getElementById('mx-injecaovalor').value) : 0,
     papelQtd: n(document.getElementById('mx-papelqtd').value),
     impressoes: n(document.getElementById('mx-impressoes').value),
     obs: document.getElementById('mx-obs').value.trim()
@@ -2206,46 +2214,190 @@ function excluirIndicador(id){
   mostrarNotify('ok','Registro excluído.');
 }
 
+function ucDe(r){ return String((r && r.uc) || '').trim(); }
+function listaUCs(regs){ var m = {}; regs.forEach(function(r){ var u = ucDe(r); if(u) m[u]=1; }); return Object.keys(m).sort(); }
+// Soma os registros de cada mês (várias unidades consumidoras no mesmo mês viram uma linha só)
+function agruparPorMes(regs){
+  var m = {};
+  regs.forEach(function(r){ var k = r.mes; if(!k) return; (m[k] = m[k] || {mes:k, n:0}); m[k].n++; IND_CAMPOS.forEach(function(c){ m[k][c] = (m[k][c]||0) + n(r[c]); }); });
+  return Object.keys(m).sort().map(function(k){ return m[k]; });
+}
+var _indEscopo = 'unidade', _indAno = '';
+function setIndEscopo(v){ _indEscopo = v; renderPage(); }
+function setIndAno(v){ _indAno = v; renderPage(); }
+var IND_CAMPOS = ['energiaKwh','energiaValor','aguaM3','aguaValor','geracaoKwh','geracaoValor','injecaoKwh','injecaoValor','papelQtd','impressoes'];
+function somarIndicadores(regs){
+  regs = regs.map(function(r){ return (r._unidade && r._unidade!=='Matriz') ? Object.assign({}, r, {geracaoKwh:0,geracaoValor:0,injecaoKwh:0,injecaoValor:0}) : r; });
+  var t = {}; IND_CAMPOS.forEach(function(k){ t[k]=0; });
+  regs.forEach(function(r){ IND_CAMPOS.forEach(function(k){ t[k] += n(r[k]); }); });
+  return t;
+}
+function regsConsolidado(){
+  var out = [];
+  UNIDADES.forEach(function(u){
+    (state.indicadores[u]||[]).forEach(function(r){
+      if(_indAno && String(r.mes||'').slice(0,4) !== _indAno) return;
+      out.push(Object.assign({}, r, {_unidade:u}));
+    });
+  });
+  return out;
+}
+function exportarConsolidadoCsv(){
+  var regs = regsConsolidado().sort(function(a,b){ return a.mes<b.mes?-1:(a.mes>b.mes?1:(a._unidade<b._unidade?-1:1)); });
+  var linhas = [['Unidade','Unidade consumidora','Mes','Energia kWh','Energia R$','Agua m3','Agua R$','Geracao kWh','Geracao R$','Injecao kWh','Injecao R$','Papel resmas','Impressoes'].join(';')];
+  regs.forEach(function(r){
+    linhas.push([r._unidade,ucDe(r),r.mes].concat(IND_CAMPOS.map(function(k){ return String(n(r[k])).replace('.',','); })).join(';'));
+  });
+  baixarArquivo('indicadores_consolidado'+(_indAno?'_'+_indAno:'')+'.csv', '\uFEFF'+linhas.join('\n'), 'text/csv;charset=utf-8');
+}
+function renderIndicadoresConsolidado(){
+  var regs = regsConsolidado();
+  var anos = {};
+  UNIDADES.forEach(function(u){ (state.indicadores[u]||[]).forEach(function(r){ if(r.mes) anos[String(r.mes).slice(0,4)] = 1; }); });
+  var listaAnos = Object.keys(anos).sort().reverse();
+  var listaMeses0 = Object.keys(regs.reduce(function(a,r){ a[r.mes]=1; return a; },{}));
+  var tot = somarIndicadores(regs);
+  var totMat = somarIndicadores(regs.filter(function(r){ return r._unidade==='Matriz'; }));
+  var autos = totMat.energiaKwh > 0 ? Math.min(999,(totMat.geracaoKwh/totMat.energiaKwh)*100) : 0;
+
+  var html = '<div style="display:flex;justify-content:space-between;margin-bottom:14px;align-items:center;flex-wrap:wrap;gap:10px">'
+    + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="segmented">'
+    + '<button class="seg-btn" onclick="setIndEscopo(\'unidade\')">🏢 Unidade atual</button>'
+    + '<button class="seg-btn on" onclick="setIndEscopo(\'todas\')">🌐 Consolidado (Matriz + unidades)</button></div>'
+    + '<select onchange="setIndAno(this.value)" style="padding:7px 10px;border:1px solid var(--bd);border-radius:8px;font-size:12px"><option value="">Todos os anos</option>'
+    + listaAnos.map(function(a){ return '<option value="'+a+'"'+(a===_indAno?' selected':'')+'>'+a+'</option>'; }).join('')
+    + '</select></div>'
+    + '<button class="btn-s" onclick="exportarConsolidadoCsv()">⬇️ Exportar CSV</button></div>';
+
+  if(regs.length===0){
+    html += '<div class="empty-state"><div class="es-ic">💡</div><div class="es-txt">Nenhum registro mensal cadastrado'+(_indAno?' em '+_indAno:'')+'.</div></div>';
+    document.getElementById('content').innerHTML = html; return;
+  }
+
+  // KPIs
+  function kpi(ic,v,l){ return '<div class="kpi-card"><div class="kpi-icon">'+ic+'</div><div class="kpi-val" style="font-size:20px">'+v+'</div><div class="kpi-lbl">'+l+'</div></div>'; }
+  html += '<div class="dash-grid" style="grid-template-columns:repeat(3,1fr)">'
+    + kpi('⚡',fmtNum(tot.energiaKwh)+' kWh','Energia consumida — '+fmtVal(tot.energiaValor))
+    + kpi('💧',fmtNum(tot.aguaM3)+' m³','Água consumida — '+fmtVal(tot.aguaValor))
+    + kpi('☀️',fmtNum(tot.geracaoKwh)+' kWh','Energia gerada (Matriz) — '+fmtVal(tot.geracaoValor))
+    + kpi('🔌',fmtNum(tot.injecaoKwh)+' kWh','Injetada na rede (Matriz) — '+fmtVal(tot.injecaoValor))
+    + kpi('🖨️',fmtNum(tot.papelQtd)+' resmas',fmtNum(tot.impressoes,0)+' impressões')
+    + (totMat.energiaKwh>0 ? kpi('📈',fmtNum(autos,1)+'%','Autossuficiência da Matriz (geração ÷ consumo)') : '')
+    + '</div>';
+
+  // Tabela por unidade
+  html += '<div class="panel-card" style="margin-bottom:18px"><div class="panel-title">Consolidado por unidade'+(_indAno?' — '+_indAno:'')+'</div><div style="overflow-x:auto"><table class="rp-table"><thead><tr>'
+    + '<th>Unidade</th><th>Meses</th><th>Energia (kWh)</th><th>Energia (R$)</th><th>Água (m³)</th><th>Água (R$)</th><th>Geração (kWh)</th><th>Injeção (kWh)</th><th>Papel (resmas)</th><th>Impressões</th></tr></thead><tbody>';
+  var porUnidade = {};
+  UNIDADES.forEach(function(u){
+    var rs = regs.filter(function(r){ return r._unidade===u; });
+    var t = somarIndicadores(rs); porUnidade[u] = t;
+    html += '<tr><td><b>'+esc(u)+'</b></td><td>'+agruparPorMes(rs).length+'</td><td>'+fmtNum(t.energiaKwh)+'</td><td>'+fmtVal(t.energiaValor)+'</td><td>'+fmtNum(t.aguaM3)+'</td><td>'+fmtVal(t.aguaValor)+'</td><td>'+fmtNum(t.geracaoKwh)+'</td><td>'+fmtNum(t.injecaoKwh)+'</td><td>'+fmtNum(t.papelQtd)+'</td><td>'+fmtNum(t.impressoes,0)+'</td></tr>';
+  });
+  html += '<tr style="font-weight:700;background:var(--gl)"><td>TOTAL GERAL</td><td>'+listaMeses0.length+'</td><td>'+fmtNum(tot.energiaKwh)+'</td><td>'+fmtVal(tot.energiaValor)+'</td><td>'+fmtNum(tot.aguaM3)+'</td><td>'+fmtVal(tot.aguaValor)+'</td><td>'+fmtNum(tot.geracaoKwh)+'</td><td>'+fmtNum(tot.injecaoKwh)+'</td><td>'+fmtNum(tot.papelQtd)+'</td><td>'+fmtNum(tot.impressoes,0)+'</td></tr>'
+    + '</tbody></table></div></div>';
+
+  // Tabela mês a mês consolidada
+  var meses = {}; regs.forEach(function(r){ (meses[r.mes] = meses[r.mes] || []).push(r); });
+  var listaMeses = Object.keys(meses).sort().reverse();
+  html += '<div class="panel-card" style="margin-bottom:18px"><div class="panel-title">Consolidado mês a mês (todas as unidades)</div><div style="overflow-x:auto"><table class="rp-table"><thead><tr>'
+    + '<th>Mês</th><th>Unidades</th><th>Energia (kWh)</th><th>Energia (R$)</th><th>Água (m³)</th><th>Água (R$)</th><th>Geração (kWh)</th><th>Injeção (kWh)</th><th>Papel</th><th>Impressões</th></tr></thead><tbody>';
+  listaMeses.forEach(function(m){
+    var t = somarIndicadores(meses[m]);
+    html += '<tr><td><b>'+mesLabel(m)+'</b></td><td>'+Object.keys(meses[m].reduce(function(a,r){ a[r._unidade]=1; return a; },{})).length+'/'+UNIDADES.length+'</td><td>'+fmtNum(t.energiaKwh)+'</td><td>'+fmtVal(t.energiaValor)+'</td><td>'+fmtNum(t.aguaM3)+'</td><td>'+fmtVal(t.aguaValor)+'</td><td>'+fmtNum(t.geracaoKwh)+'</td><td>'+fmtNum(t.injecaoKwh)+'</td><td>'+fmtNum(t.papelQtd)+'</td><td>'+fmtNum(t.impressoes,0)+'</td></tr>';
+  });
+  html += '</tbody></table></div><div class="panel-hint" style="margin-top:8px">A coluna "Unidades" mostra quantas unidades lançaram o mês — meses incompletos subestimam o total.</div></div>';
+
+  // Gráficos
+  html += '<div class="dash-grid" style="grid-template-columns:repeat(2,1fr)">'
+    + '<div class="panel-card"><div class="panel-title">⚡ Energia consumida por unidade (kWh)</div><canvas id="ciEnergia" height="220"></canvas></div>'
+    + '<div class="panel-card"><div class="panel-title">💧 Água consumida por unidade (m³)</div><canvas id="ciAgua" height="220"></canvas></div>'
+    + '<div class="panel-card"><div class="panel-title">📅 Evolução mensal consolidada — Energia (kWh) e Água (m³)</div><canvas id="ciEvol" height="220"></canvas></div>'
+    + '<div class="panel-card"><div class="panel-title">💰 Custo por unidade — Energia x Água (R$)</div><canvas id="ciCusto" height="220"></canvas></div>'
+    + '</div>';
+  document.getElementById('content').innerHTML = html;
+
+  if(typeof Chart === 'undefined'){
+    ['ciEnergia','ciAgua','ciEvol','ciCusto'].forEach(function(id){ var c=document.getElementById(id); if(c) c.parentNode.innerHTML += '<div style="padding:30px 10px;text-align:center;color:var(--txt3);font-size:12px">Gráfico indisponível sem conexão com a internet.</div>', c.remove(); });
+    return;
+  }
+  var C = {energia:'#00843D', agua:'#0EA5E9'};
+  var us = UNIDADES;
+  var opt = {responsive:true, plugins:{legend:{position:'bottom'}}};
+  _charts.push(new Chart(document.getElementById('ciEnergia'), {type:'bar', data:{labels:us, datasets:[{label:'Energia (kWh)', data:us.map(function(u){return porUnidade[u].energiaKwh;}), backgroundColor:C.energia}]}, options:opt}));
+  _charts.push(new Chart(document.getElementById('ciAgua'), {type:'bar', data:{labels:us, datasets:[{label:'Água (m³)', data:us.map(function(u){return porUnidade[u].aguaM3;}), backgroundColor:C.agua}]}, options:opt}));
+  var asc = listaMeses.slice().reverse();
+  _charts.push(new Chart(document.getElementById('ciEvol'), {type:'line', data:{labels:asc.map(mesLabel), datasets:[
+    {label:'Energia (kWh)', data:asc.map(function(m){return somarIndicadores(meses[m]).energiaKwh;}), borderColor:C.energia, backgroundColor:C.energia, tension:.3, yAxisID:'y'},
+    {label:'Água (m³)', data:asc.map(function(m){return somarIndicadores(meses[m]).aguaM3;}), borderColor:C.agua, backgroundColor:C.agua, tension:.3, yAxisID:'y1'}
+  ]}, options:{responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{type:'linear',position:'left',title:{display:true,text:'kWh'}}, y1:{type:'linear',position:'right',title:{display:true,text:'m³'},grid:{drawOnChartArea:false}}}}}));
+  _charts.push(new Chart(document.getElementById('ciCusto'), {type:'bar', data:{labels:us, datasets:[
+    {label:'Energia (R$)', data:us.map(function(u){return porUnidade[u].energiaValor;}), backgroundColor:C.energia},
+    {label:'Água (R$)', data:us.map(function(u){return porUnidade[u].aguaValor;}), backgroundColor:C.agua}
+  ]}, options:opt}));
+}
+
 function renderIndicadores(){
-  var regs = todosIndicadoresUnidade().slice().sort(function(a,b){ return a.mes < b.mes ? 1 : -1; });
+  if(_indEscopo==='todas'){ renderIndicadoresConsolidado(); return; }
+  var regs = todosIndicadoresUnidade().slice().sort(function(a,b){ return a.mes === b.mes ? (ucDe(a) < ucDe(b) ? -1 : 1) : (a.mes < b.mes ? 1 : -1); });
 
   var tot = {energiaKwh:0, energiaValor:0, aguaM3:0, aguaValor:0, geracaoKwh:0, geracaoValor:0, injecaoKwh:0, injecaoValor:0, papelQtd:0, impressoes:0};
   regs.forEach(function(r){ Object.keys(tot).forEach(function(k){ tot[k] += n(r[k]); }); });
-  var autossuficiencia = tot.energiaKwh > 0 ? Math.min(999, (tot.geracaoKwh / tot.energiaKwh) * 100) : 0;
+  var ehMatriz = state.unit==='Matriz';
+  var autossuficiencia = (ehMatriz && tot.energiaKwh > 0) ? Math.min(999, (tot.geracaoKwh / tot.energiaKwh) * 100) : 0;
 
   var html = '<div style="display:flex;justify-content:space-between;margin-bottom:14px;align-items:center;flex-wrap:wrap;gap:10px">'
     + '<div style="font-size:12px;color:var(--txt2)">Consumo e valor pago de energia, água, geração/injeção solar, papel e impressões — '+esc(state.unit)+'.</div>'
-    + '<button class="btn-g" onclick="abrirModalIndicador()">+ Novo Registro Mensal</button></div>';
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap"><div class="segmented"><button class="seg-btn on" onclick="setIndEscopo(\'unidade\')">🏢 Unidade atual</button><button class="seg-btn" onclick="setIndEscopo(\'todas\')">🌐 Consolidado (Matriz + unidades)</button></div><button class="btn-g" onclick="abrirModalIndicador()">+ Novo Registro Mensal</button></div></div>';
 
   html += '<div class="panel-card" style="margin-bottom:18px">'
-    + '<div class="panel-title">Totais acumulados — '+esc(state.unit)+' ('+regs.length+' mês(es) registrado(s))</div>'
+    + '<div class="panel-title">Totais acumulados — '+esc(state.unit)+' ('+regs.length+' registro(s))</div>'
     + '<table class="rp-table"><thead><tr><th>Indicador</th><th>Total do período</th></tr></thead><tbody>'
     + '<tr><td>⚡ Energia consumida</td><td><b>'+fmtNum(tot.energiaKwh)+' kWh</b> — '+fmtVal(tot.energiaValor)+'</td></tr>'
     + '<tr><td>💧 Água consumida</td><td><b>'+fmtNum(tot.aguaM3)+' m³</b> — '+fmtVal(tot.aguaValor)+'</td></tr>'
-    + '<tr><td>☀️ Energia gerada (solar)</td><td><b>'+fmtNum(tot.geracaoKwh)+' kWh</b> — '+fmtVal(tot.geracaoValor)+' economizados</td></tr>'
-    + '<tr><td>🔌 Energia injetada na rede</td><td><b>'+fmtNum(tot.injecaoKwh)+' kWh</b> — '+fmtVal(tot.injecaoValor)+' em créditos</td></tr>'
+    + (ehMatriz ? '<tr><td>☀️ Energia gerada (solar)</td><td><b>'+fmtNum(tot.geracaoKwh)+' kWh</b> — '+fmtVal(tot.geracaoValor)+' economizados</td></tr>'
+    + '<tr><td>🔌 Energia injetada na rede</td><td><b>'+fmtNum(tot.injecaoKwh)+' kWh</b> — '+fmtVal(tot.injecaoValor)+' em créditos</td></tr>' : '')
     + '<tr><td>🖨️ Papel consumido</td><td><b>'+fmtNum(tot.papelQtd)+' resmas</b></td></tr>'
     + '<tr><td>📄 Total de impressões</td><td><b>'+fmtNum(tot.impressoes,0)+'</b></td></tr>'
-    + (tot.energiaKwh>0 ? '<tr><td>📈 Autossuficiência energética (geração ÷ consumo)</td><td><b>'+fmtNum(autossuficiencia,1)+'%</b></td></tr>' : '')
+    + (ehMatriz && tot.energiaKwh>0 ? '<tr><td>📈 Autossuficiência energética (geração ÷ consumo)</td><td><b>'+fmtNum(autossuficiencia,1)+'%</b></td></tr>' : '')
     + '</tbody></table></div>';
 
+  var ucs = listaUCs(regs), temUC = ucs.length > 0;
+  function linhaSoma(rot, t, extra){
+    return '<tr><td><b>'+rot+'</b></td>'+(extra!==undefined?'<td>'+extra+'</td>':'')+'<td>'+fmtNum(t.energiaKwh)+'</td><td>'+fmtVal(t.energiaValor)+'</td><td>'+fmtNum(t.aguaM3)+'</td><td>'+fmtVal(t.aguaValor)+'</td>'
+      + (ehMatriz ? '<td>'+fmtNum(t.geracaoKwh)+'</td><td>'+fmtNum(t.injecaoKwh)+'</td>' : '') + '<td>'+fmtNum(t.papelQtd)+'</td><td>'+fmtNum(t.impressoes,0)+'</td></tr>';
+  }
+  var thSoma = '<th>Energia (kWh)</th><th>Energia (R$)</th><th>Água (m³)</th><th>Água (R$)</th>' + (ehMatriz ? '<th>Geração (kWh)</th><th>Injeção (kWh)</th>' : '') + '<th>Papel (resmas)</th><th>Impressões</th>';
+  if(temUC && regs.length){
+    var grupos = ucs.concat(regs.some(function(r){ return !ucDe(r); }) ? [''] : []);
+    html += '<div class="panel-card" style="margin-bottom:18px"><div class="panel-title">Por unidade consumidora — '+esc(state.unit)+'</div><div style="overflow-x:auto"><table class="rp-table"><thead><tr><th>Unidade consumidora</th><th>Meses</th>'+thSoma+'</tr></thead><tbody>';
+    grupos.forEach(function(g){
+      var rs = regs.filter(function(r){ return ucDe(r)===g; });
+      html += linhaSoma(g ? esc(g) : '<i>(sem identificação)</i>', somarIndicadores(rs), rs.length);
+    });
+    html += linhaSoma('TOTAL DA UNIDADE', tot, regs.length).replace('<tr>','<tr style="font-weight:700;background:var(--gl)">') + '</tbody></table></div></div>';
+    var porMes = agruparPorMes(regs).reverse();
+    html += '<div class="panel-card" style="margin-bottom:18px"><div class="panel-title">Total da unidade mês a mês (soma de todas as unidades consumidoras)</div><div style="overflow-x:auto"><table class="rp-table"><thead><tr><th>Mês</th><th>Contas</th>'+thSoma+'</tr></thead><tbody>';
+    porMes.forEach(function(m){ html += linhaSoma(mesLabel(m.mes), m, m.n); });
+    html += '</tbody></table></div></div>';
+  }
   if(regs.length===0){
     html += '<div class="empty-state"><div class="es-ic">💡</div><div class="es-txt">Nenhum registro mensal cadastrado nesta unidade.</div></div>';
   } else {
     html += '<div class="panel-card"><div class="panel-title">Detalhamento mês a mês</div>'
       + '<div style="overflow-x:auto"><table class="rp-table"><thead><tr>'
-      + '<th>Mês</th><th>Energia (kWh)</th><th>Energia (R$)</th><th>Água (m³)</th><th>Água (R$)</th>'
-      + '<th>Geração (kWh)</th><th>Injeção (kWh)</th><th>Papel (resmas)</th><th>Impressões</th><th></th>'
+      + '<th>Mês</th>'+(temUC?'<th>Unid. consumidora</th>':'')+'<th>Energia (kWh)</th><th>Energia (R$)</th><th>Água (m³)</th><th>Água (R$)</th>'
+      + (ehMatriz ? '<th>Geração (kWh)</th><th>Injeção (kWh)</th>' : '') + '<th>Papel (resmas)</th><th>Impressões</th><th></th>'
       + '</tr></thead><tbody>';
     regs.forEach(function(r){
       html += '<tr>'
         + '<td><b>'+mesLabel(r.mes)+'</b></td>'
+        + (temUC ? '<td>'+(ucDe(r) ? esc(ucDe(r)) : '—')+'</td>' : '')
         + '<td>'+fmtNum(r.energiaKwh)+'</td>'
         + '<td>'+fmtVal(r.energiaValor)+'</td>'
         + '<td>'+fmtNum(r.aguaM3)+'</td>'
         + '<td>'+fmtVal(r.aguaValor)+'</td>'
-        + '<td>'+fmtNum(r.geracaoKwh)+'</td>'
-        + '<td>'+fmtNum(r.injecaoKwh)+'</td>'
+        + (ehMatriz ? '<td>'+fmtNum(r.geracaoKwh)+'</td><td>'+fmtNum(r.injecaoKwh)+'</td>' : '')
         + '<td>'+fmtNum(r.papelQtd)+'</td>'
         + '<td>'+fmtNum(r.impressoes,0)+'</td>'
         + '<td style="white-space:nowrap"><button class="btn-mini" onclick="abrirModalIndicador(\''+esc(r.id)+'\')">✏️</button> <button class="btn-danger" onclick="excluirIndicador(\''+esc(r.id)+'\')">🗑️</button></td>'
@@ -2263,7 +2415,7 @@ var _charts = [];
 function destruirCharts(){ _charts.forEach(function(c){ c.destroy(); }); _charts = []; }
 
 function renderEstatisticas(){
-  var regs = todosIndicadoresUnidade().slice().sort(function(a,b){ return a.mes < b.mes ? -1 : 1; });
+  var regs = agruparPorMes(todosIndicadoresUnidade());
   var itens = todosItensUnidade();
   var docs = todosDocumentosUnidade();
   var contItens = contarStatus(itens);
@@ -2276,7 +2428,7 @@ function renderEstatisticas(){
     html += '<div class="empty-state"><div class="es-ic">📈</div><div class="es-txt">Cadastre registros na aba Indicadores para visualizar os gráficos.</div></div>';
   } else {
     html += '<div class="dash-grid" style="grid-template-columns:repeat(2,1fr)">'
-      + '<div class="panel-card"><div class="panel-title">⚡ Energia — Consumo x Geração x Injeção (kWh/mês)</div><canvas id="chEnergia" height="220"></canvas></div>'
+      + '<div class="panel-card"><div class="panel-title">⚡ Energia — '+(state.unit==='Matriz'?'Consumo x Geração x Injeção':'Consumo')+' (kWh/mês)</div><canvas id="chEnergia" height="220"></canvas></div>'
       + '<div class="panel-card"><div class="panel-title">💰 Custos mensais — Energia x Água (R$)</div><canvas id="chCustos" height="220"></canvas></div>'
       + '<div class="panel-card"><div class="panel-title">💧 Consumo de água (m³/mês)</div><canvas id="chAgua" height="220"></canvas></div>'
       + '<div class="panel-card"><div class="panel-title">🖨️ Papel (resmas) x Impressões por mês</div><canvas id="chPapel" height="220"></canvas></div>'
@@ -2301,10 +2453,11 @@ function renderEstatisticas(){
   if(regs.length>0){
     var labels = regs.map(function(r){ return mesLabel(r.mes); });
     _charts.push(new Chart(document.getElementById('chEnergia'), { type:'bar', data:{ labels:labels, datasets:[
-      {label:'Consumo (kWh)', data:regs.map(function(r){return n(r.energiaKwh);}), backgroundColor:CORES.energia},
+      {label:'Consumo (kWh)', data:regs.map(function(r){return n(r.energiaKwh);}), backgroundColor:CORES.energia}
+    ].concat(state.unit==='Matriz' ? [
       {label:'Geração (kWh)', data:regs.map(function(r){return n(r.geracaoKwh);}), backgroundColor:CORES.geracao},
       {label:'Injeção (kWh)', data:regs.map(function(r){return n(r.injecaoKwh);}), backgroundColor:CORES.injecao}
-    ]}, options:{responsive:true, plugins:{legend:{position:'bottom'}}} }));
+    ] : [])}, options:{responsive:true, plugins:{legend:{position:'bottom'}}} }));
 
     _charts.push(new Chart(document.getElementById('chCustos'), { type:'line', data:{ labels:labels, datasets:[
       {label:'Energia (R$)', data:regs.map(function(r){return n(r.energiaValor);}), borderColor:CORES.energia, backgroundColor:CORES.energia, tension:.3},
